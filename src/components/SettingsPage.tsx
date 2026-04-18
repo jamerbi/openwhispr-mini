@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import UsageStatsPanel from "./settings/UsageStatsPanel";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -1323,10 +1324,8 @@ export default function SettingsPage({
 
   const renderSectionContent = () => {
     switch (activeSection) {
-      case "usage": {
-        const UsageStatsPanel = require("./settings/UsageStatsPanel").default;
+      case "usage":
         return <UsageStatsPanel />;
-      }
       case "general":
         return (
           <div className="space-y-6">
