@@ -2,7 +2,11 @@
   <img src="src/assets/logo.svg" alt="OpenWhispr" width="120" />
 </p>
 
-<h1 align="center">OpenWhispr</h1>
+<h1 align="center">OpenWhispr (Local Unplugged Edition)</h1>
+
+<p align="center">
+  <b>⚠️ Custom Fork Notice:</b> This is a custom version focused exclusively on providing a 100% local and free experience. <b>All Pro tiers, OpenWhispr Cloud integrations, and Telemetry/Analytics tracking features have been completely removed.</b> The engineering focus of this version is strictly on stripping out SaaS monetization and tracking components.
+</p>
 
 <p align="center">
   <a href="https://github.com/OpenWhispr/openwhispr/blob/main/LICENSE"><img src="https://img.shields.io/github/license/OpenWhispr/openwhispr?style=flat" alt="License" /></a>
@@ -77,19 +81,7 @@ React 19, TypeScript, Tailwind CSS v4, Electron 41, better-sqlite3, whisper.cpp,
 
 [![Star History Chart](https://api.star-history.com/svg?repos=OpenWhispr/openwhispr&type=date&legend=top-left)](https://www.star-history.com/#OpenWhispr/openwhispr&type=date&legend=top-left)
 
-## Sponsors
 
-<p align="center">
-  <a href="https://console.neon.tech/app/?promo=openwhispr">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://neon.com/brand/neon-logo-dark-color.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://neon.com/brand/neon-logo-light-color.svg">
-      <img width="250" alt="Neon" src="https://neon.com/brand/neon-logo-light-color.svg">
-    </picture>
-  </a>
-</p>
-
-<p align="center"><a href="https://console.neon.tech/app/?promo=openwhispr">Neon</a> is the serverless Postgres platform powering OpenWhispr Cloud.</p>
 
 ## Contributing
 
