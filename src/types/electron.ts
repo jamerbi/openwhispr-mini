@@ -1601,6 +1601,45 @@ declare global {
         cloudTranscription: Record<string, unknown>
       ) => Promise<TranscriptionItem>;
       markTranscriptionSynced?: (id: number, cloudId: string) => Promise<void>;
+
+      // Usage stats (local token/word tracking)
+      usageGetStats?: (opts?: {
+        period?: "today" | "week" | "month" | "all";
+        eventType?: string;
+      }) => Promise<{
+        totals: Array<{
+          event_type: string;
+          provider: string | null;
+          event_count: number;
+          total_words: number;
+          total_chars: number;
+          total_audio_ms: number | null;
+          total_input_tokens: number;
+          total_output_tokens: number;
+          total_cost_usd: number;
+        }>;
+        daily: Array<{
+          day: string;
+          event_type: string;
+          event_count: number;
+          total_words: number;
+          total_audio_ms: number | null;
+          total_tokens: number;
+          total_cost_usd: number;
+        }>;
+      }>;
+      usageLogEvent?: (event: {
+        eventType: string;
+        provider?: string | null;
+        model?: string | null;
+        wordCount?: number;
+        charCount?: number;
+        audioDurationMs?: number | null;
+        inputTokens?: number;
+        outputTokens?: number;
+        estimatedCostUsd?: number;
+      }) => Promise<{ success: boolean }>;
+      usageResetStats?: () => Promise<{ success: boolean }>;
     };
 
     api?: {

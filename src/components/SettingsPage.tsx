@@ -104,7 +104,8 @@ export type SettingsSectionType =
   | "aiModels"
   | "agentConfig"
   | "prompts"
-  | "agentMode";
+  | "agentMode"
+  | "usage";
 
 interface SettingsPageProps {
   activeSection?: SettingsSectionType;
@@ -1322,6 +1323,10 @@ export default function SettingsPage({
 
   const renderSectionContent = () => {
     switch (activeSection) {
+      case "usage": {
+        const UsageStatsPanel = require("./settings/UsageStatsPanel").default;
+        return <UsageStatsPanel />;
+      }
       case "general":
         return (
           <div className="space-y-6">

@@ -11,6 +11,7 @@ import {
   Key,
   Shield,
   MessageSquare,
+  BarChart2,
 } from "lucide-react";
 import SidebarModal, { type SidebarItem } from "./ui/SidebarModal";
 import SettingsPage, { SettingsSectionType } from "./SettingsPage";
@@ -85,6 +86,13 @@ export default function SettingsModal({ open, onOpenChange, initialSection }: Se
         label: t("settingsModal.sections.system.label"),
         icon: Wrench,
         description: t("settingsModal.sections.system.description"),
+        group: t("settingsModal.groups.system"),
+      },
+      {
+        id: "usage",
+        label: "Usage Stats",
+        icon: BarChart2,
+        description: "Words, tokens & cost tracking",
         group: t("settingsModal.groups.system"),
       },
     ],

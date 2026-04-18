@@ -521,6 +521,29 @@ class DatabaseManager {
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_transcriptions_client_id ON transcriptions(client_transcription_id)"
       );
 
+      // Usage tracking table
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS usage_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          event_type TEXT NOT NULL,
+          provider TEXT,
+          model TEXT,
+          word_count INTEGER DEFAULT 0,
+          char_count INTEGER DEFAULT 0,
+          audio_duration_ms INTEGER,
+          input_tokens INTEGER DEFAULT 0,
+          output_tokens INTEGER DEFAULT 0,
+          estimated_cost_usd REAL DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      this.db.exec(
+        "CREATE INDEX IF NOT EXISTS idx_usage_events_created ON usage_events(created_at)"
+      );
+      this.db.exec(
+        "CREATE INDEX IF NOT EXISTS idx_usage_events_type ON usage_events(event_type)"
+      );
+
       return true;
     } catch (error) {
       debugLogger.error("Database initialization failed", { error: error.message }, "database");
@@ -2324,6 +2347,121 @@ class DatabaseManager {
     } catch (error) {
       debugLogger.error("Error removing speaker mapping", { error: error.message }, "database");
       throw error;
+    }
+  }
+
+  // ── Usage tracking ──────────────────────────────────────────────────────────
+
+  logUsageEvent({
+    eventType,
+    provider = null,
+    model = null,
+    wordCount = 0,
+    charCount = 0,
+    audioDurationMs = null,
+    inputTokens = 0,
+    outputTokens = 0,
+    estimatedCostUsd = 0,
+  }) {
+    try {
+      if (!this.db) return;
+      this.db
+        .prepare(
+          `INSERT INTO usage_events
+           (event_type, provider, model, word_count, char_count, audio_duration_ms,
+            input_tokens, output_tokens, estimated_cost_usd)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          eventType,
+          provider,
+          model,
+          wordCount,
+          charCount,
+          audioDurationMs,
+          inputTokens,
+          outputTokens,
+          estimatedCostUsd
+        );
+    } catch (error) {
+      debugLogger.error("Error logging usage event", { error: error.message }, "database");
+    }
+  }
+
+  getUsageStats({ period = "today", eventType = null } = {}) {
+    try {
+      if (!this.db) return { events: [], totals: {} };
+
+      let fromClause;
+      const now = new Date();
+      if (period === "today") {
+        fromClause = `datetime('now', 'start of day')`;
+      } else if (period === "week") {
+        fromClause = `datetime('now', '-6 days', 'start of day')`;
+      } else if (period === "month") {
+        fromClause = `datetime('now', '-29 days', 'start of day')`;
+      } else {
+        fromClause = `datetime('2000-01-01')`;
+      }
+
+      let whereClause = `created_at >= ${fromClause}`;
+      const params = [];
+      if (eventType) {
+        whereClause += ` AND event_type = ?`;
+        params.push(eventType);
+      }
+
+      const totals = this.db
+        .prepare(
+          `SELECT
+             event_type,
+             provider,
+             COUNT(*) AS event_count,
+             SUM(word_count) AS total_words,
+             SUM(char_count) AS total_chars,
+             SUM(audio_duration_ms) AS total_audio_ms,
+             SUM(input_tokens) AS total_input_tokens,
+             SUM(output_tokens) AS total_output_tokens,
+             SUM(estimated_cost_usd) AS total_cost_usd
+           FROM usage_events
+           WHERE ${whereClause}
+           GROUP BY event_type, provider
+           ORDER BY event_type, provider`
+        )
+        .all(...params);
+
+      const daily = this.db
+        .prepare(
+          `SELECT
+             date(created_at) AS day,
+             event_type,
+             COUNT(*) AS event_count,
+             SUM(word_count) AS total_words,
+             SUM(audio_duration_ms) AS total_audio_ms,
+             SUM(input_tokens + output_tokens) AS total_tokens,
+             SUM(estimated_cost_usd) AS total_cost_usd
+           FROM usage_events
+           WHERE ${whereClause}
+           GROUP BY day, event_type
+           ORDER BY day DESC`
+        )
+        .all(...params);
+
+      return { totals, daily };
+    } catch (error) {
+      debugLogger.error("Error getting usage stats", { error: error.message }, "database");
+      return { totals: [], daily: [] };
+    }
+  }
+
+  resetUsageStats() {
+    try {
+      if (!this.db) return { success: false };
+      this.db.prepare("DELETE FROM usage_events").run();
+      return { success: true };
+    } catch (error) {
+      debugLogger.error("Error resetting usage stats", { error: error.message }, "database");
+      return { success: false };
     }
   }
 }

@@ -511,6 +511,19 @@ class IPCHandlers {
       if (result?.success && result?.transcription) {
         setImmediate(() => {
           this.broadcastToWindows("transcription-added", result.transcription);
+          // Log usage event asynchronously — never blocks transcription pipeline
+          try {
+            const words = (text || "").trim().split(/\s+/).filter(Boolean).length;
+            const chars = (text || "").length;
+            this.databaseManager.logUsageEvent({
+              eventType: "transcription",
+              provider: options?.provider || null,
+              model: options?.model || null,
+              wordCount: words,
+              charCount: chars,
+              audioDurationMs: options?.audioDurationMs || null,
+            });
+          } catch (_) { /* never throw from usage logging */ }
         });
       }
       return result;
@@ -518,6 +531,22 @@ class IPCHandlers {
 
     ipcMain.handle("db-get-transcriptions", async (event, limit = 50) => {
       return this.databaseManager.getTranscriptions(limit);
+    });
+
+    // ── Usage stats handlers ─────────────────────────────────────────────────
+    ipcMain.handle("usage:get-stats", async (_event, opts) => {
+      return this.databaseManager.getUsageStats(opts || {});
+    });
+
+    ipcMain.handle("usage:log-event", async (_event, eventData) => {
+      setImmediate(() => {
+        try { this.databaseManager.logUsageEvent(eventData); } catch (_) {}
+      });
+      return { success: true };
+    });
+
+    ipcMain.handle("usage:reset-stats", async () => {
+      return this.databaseManager.resetUsageStats();
     });
 
     ipcMain.handle("db-clear-transcriptions", async (event) => {
