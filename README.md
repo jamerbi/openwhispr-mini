@@ -5,7 +5,7 @@
 <h1 align="center">OpenWhispr (Local Unplugged Edition)</h1>
 
 <p align="center">
-  <b>⚠️ Custom Fork Notice:</b> This is a custom version focused exclusively on providing a 100% local and free experience. <b>All Pro tiers, OpenWhispr Cloud integrations, and Telemetry/Analytics tracking features have been completely removed.</b> The engineering focus of this version is strictly on stripping out SaaS monetization and tracking components.
+  <b>⚠️ Custom Fork Notice:</b> This version focuses on a stripped-down, unbundled experience. <b>All SaaS "Pro" tiers, OpenWhispr Cloud integrations, and Telemetry/Analytics trackers have been completely removed.</b> However, this fork embraces a powerful BYOK (Bring Your Own Key) philosophy: you are completely free to process audio locally or link up your own API keys for third-party providers such as OpenAI, Anthropic, Gemini, Groq, and custom API endpoints.
 </p>
 
 <p align="center">
