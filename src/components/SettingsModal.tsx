@@ -39,27 +39,6 @@ export default function SettingsModal({ open, onOpenChange, initialSection }: Se
   const sidebarItems: SidebarItem<SettingsSectionType>[] = useMemo(
     () => [
       {
-        id: "account",
-        label: t("settingsModal.sections.account.label"),
-        icon: UserCircle,
-        description: t("settingsModal.sections.account.description"),
-        group: t("settingsModal.groups.account"),
-      },
-      {
-        id: "plansBilling",
-        label: t("settingsModal.sections.plansBilling.label"),
-        icon: CreditCard,
-        description: t("settingsModal.sections.plansBilling.description"),
-        group: t("settingsModal.groups.account"),
-      },
-      {
-        id: "apiKeys",
-        label: t("settingsModal.sections.apiKeys.label"),
-        icon: Key,
-        description: t("settingsModal.sections.apiKeys.description"),
-        group: t("settingsModal.groups.account"),
-      },
-      {
         id: "general",
         label: t("settingsModal.sections.general.label"),
         icon: Sliders,
@@ -112,7 +91,7 @@ export default function SettingsModal({ open, onOpenChange, initialSection }: Se
     [t]
   );
 
-  const [activeSection, setActiveSection] = React.useState<SettingsSectionType>("account");
+  const [activeSection, setActiveSection] = React.useState<SettingsSectionType>("general");
   const [prevOpen, setPrevOpen] = useState(open);
 
   if (open && !prevOpen && initialSection) {
