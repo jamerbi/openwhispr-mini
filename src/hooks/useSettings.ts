@@ -60,7 +60,6 @@ export interface ApiKeySettings {
 
 export interface PrivacySettings {
   cloudBackupEnabled: boolean;
-  telemetryEnabled: boolean;
   audioRetentionDays: number;
   dataRetentionEnabled: boolean;
 }
@@ -275,8 +274,7 @@ function useSettingsInternal() {
     setNoteFilesPath: store.setNoteFilesPath,
     cloudBackupEnabled: store.cloudBackupEnabled,
     setCloudBackupEnabled: store.setCloudBackupEnabled,
-    telemetryEnabled: store.telemetryEnabled,
-    setTelemetryEnabled: store.setTelemetryEnabled,
+
     audioRetentionDays: store.audioRetentionDays,
     setAudioRetentionDays: store.setAudioRetentionDays,
     dataRetentionEnabled: store.dataRetentionEnabled,
