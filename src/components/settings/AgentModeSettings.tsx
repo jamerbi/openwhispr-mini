@@ -75,14 +75,6 @@ export default function AgentModeSettings() {
 
   const agentModes: InferenceModeOption[] = [
     {
-      id: "openwhispr",
-      label: t("agentMode.settings.modes.openwhispr"),
-      description: t("agentMode.settings.modes.openwhisprDesc"),
-      icon: <Cloud className="w-4 h-4" />,
-      disabled: !isSignedIn,
-      badge: !isSignedIn ? t("common.freeAccountRequired") : undefined,
-    },
-    {
       id: "providers",
       label: t("agentMode.settings.modes.providers"),
       description: t("agentMode.settings.modes.providersDesc"),

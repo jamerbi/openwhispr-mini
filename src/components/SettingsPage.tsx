@@ -249,14 +249,6 @@ function TranscriptionSection({
 
   const transcriptionModes: InferenceModeOption[] = [
     {
-      id: "openwhispr",
-      label: t("settingsPage.transcription.modes.openwhispr"),
-      description: t("settingsPage.transcription.modes.openwhisprDesc"),
-      icon: <Cloud className="w-4 h-4" />,
-      disabled: !isSignedIn,
-      badge: !isSignedIn ? t("common.freeAccountRequired") : undefined,
-    },
-    {
       id: "providers",
       label: t("settingsPage.transcription.modes.providers"),
       description: t("settingsPage.transcription.modes.providersDesc"),
@@ -461,14 +453,6 @@ function AiModelsSection({
   const { t } = useTranslation();
 
   const aiModes: InferenceModeOption[] = [
-    {
-      id: "openwhispr",
-      label: t("settingsPage.aiModels.modes.openwhispr"),
-      description: t("settingsPage.aiModels.modes.openwhisprDesc"),
-      icon: <Cloud className="w-4 h-4" />,
-      disabled: !isSignedIn,
-      badge: !isSignedIn ? t("common.freeAccountRequired") : undefined,
-    },
     {
       id: "providers",
       label: t("settingsPage.aiModels.modes.providers"),
