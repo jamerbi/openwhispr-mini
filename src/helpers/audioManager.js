@@ -162,6 +162,59 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     return this.workletBlobUrl;
   }
 
+  async _processReasoningQueue() {
+    if (this._isProcessingReasoningQueue) return;
+    this._isProcessingReasoningQueue = true;
+
+    try {
+      while (this.streamingReasoningQueue?.length > 0) {
+        const chunk = this.streamingReasoningQueue.shift();
+        if (!chunk || !chunk.trim()) continue;
+
+        const stSettings = getSettings();
+        const cloudReasoningMode = stSettings.cloudReasoningMode || "openwhispr";
+        const agentName = localStorage.getItem("agentName") || null;
+
+        let reasonedChunk = chunk.trim();
+        try {
+          if (cloudReasoningMode === "openwhispr") {
+            const reasonResult = await withSessionRefresh(async () => {
+              const res = await window.electronAPI.cloudReason(chunk.trim(), {
+                agentName,
+                customDictionary: stSettings.customDictionary,
+                customPrompt: this.getCustomPrompt(),
+                language: stSettings.preferredLanguage || "auto",
+                locale: stSettings.uiLanguage || "en",
+                sttProvider: this.getStreamingProviderName(),
+                sttModel: this.getStreamingProviderName(), // approximation
+              });
+              if (!res.success) throw new Error(res.error);
+              return res;
+            });
+            if (reasonResult.text) reasonedChunk = reasonResult.text.trim();
+          } else {
+            const { default: ReasoningService } = await import("../services/ReasoningService");
+            const model = getEffectiveReasoningModel();
+            const resText = await ReasoningService.processText(chunk.trim(), model, agentName, {
+              systemPrompt: this.getCustomPrompt(),
+            });
+            if (resText) reasonedChunk = resText.trim();
+          }
+        } catch (e) {
+          logger.warn("Streaming batch reasoning failed", { error: e.message }, "streaming");
+        }
+
+        if (this.accumulatedReasonedText) {
+          this.accumulatedReasonedText += " " + reasonedChunk;
+        } else {
+          this.accumulatedReasonedText = reasonedChunk;
+        }
+      }
+    } finally {
+      this._isProcessingReasoningQueue = false;
+    }
+  }
+
   getCustomDictionaryPrompt() {
     const words = getSettings().customDictionary;
     return words.length > 0 ? words.join(", ") : null;
@@ -2157,6 +2210,9 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
       this.streamingPartialText = "";
       this.streamingTextResolve = null;
       this.streamingTextDebounce = null;
+      this.streamingReasoningQueue = [];
+      this.accumulatedReasonedText = "";
+      this._isProcessingReasoningQueue = false;
 
       const partialCleanup = provider.onPartial((text) => {
         this.streamingPartialText = text;
@@ -2169,8 +2225,20 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
         const prevLen = this.streamingFinalText.length;
         this.streamingFinalText = text;
         this.streamingPartialText = "";
-        const newSegment = text.slice(prevLen);
+        const newSegment = text.slice(prevLen).trim();
+        
         if (newSegment) {
+          const stSettings = getSettings();
+          if (stSettings.useReasoningModel && !this.skipReasoning) {
+            this.streamingReasoningQueue.push(newSegment);
+            this._processReasoningQueue();
+          } else {
+            if (this.accumulatedReasonedText) {
+              this.accumulatedReasonedText += " " + newSegment;
+            } else {
+              this.accumulatedReasonedText = newSegment;
+            }
+          }
           this.onStreamingCommit?.(newSegment);
         }
       });
@@ -2423,73 +2491,32 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
 
     let usedCloudReasoning = false;
     if (stSettings.useReasoningModel && finalText && !this.skipReasoning) {
-      const reasoningStart = performance.now();
-      const agentName = localStorage.getItem("agentName") || null;
-      const cloudReasoningMode = stSettings.cloudReasoningMode || "openwhispr";
+      const waitStart = performance.now();
+      
+      // If the provider returned a final snippet of text via `stopResult.text` that didn't trigger `onFinal`
+      // or if there was partial text left over, we need to process it quickly now.
+      const leftoverText = this.streamingPartialText || (stopResult?.text && !this.streamingFinalText.includes(stopResult.text) ? stopResult.text : "");
+      if (leftoverText && leftoverText.trim()) {
+         this.streamingReasoningQueue.push(leftoverText.trim());
+         this._processReasoningQueue();
+      }
 
-      try {
-        if (cloudReasoningMode === "openwhispr") {
-          const reasonResult = await withSessionRefresh(async () => {
-            const res = await window.electronAPI.cloudReason(finalText, {
-              agentName,
-              customDictionary: stSettings.customDictionary,
-              customPrompt: this.getCustomPrompt(),
-              language: stSettings.preferredLanguage || "auto",
-              locale: stSettings.uiLanguage || "en",
-              sttProvider: this.getStreamingProviderName(),
-              sttModel: streamingSttModel,
-              sttProcessingMs: streamingSttProcessingMs,
-              sttWordCount: streamingSttWordCount,
-              sttLanguage: streamingSttLanguage,
-              audioDurationMs: durationSeconds ? Math.round(durationSeconds * 1000) : undefined,
-              audioSizeBytes: streamingAudioBytesSent || undefined,
-              audioFormat: "linear16",
-            });
-            if (!res.success) {
-              const err = new Error(res.error || "Cloud reasoning failed");
-              err.code = res.code;
-              throw err;
-            }
-            return res;
-          });
+      // Wait up to 5 seconds for the background reasoning queue to finish
+      while ((this._isProcessingReasoningQueue || this.streamingReasoningQueue?.length > 0) && (performance.now() - waitStart < 5000)) {
+         await new Promise((resolve) => setTimeout(resolve, 50));
+      }
 
-          if (reasonResult.success && reasonResult.text) {
-            finalText = reasonResult.text;
-          }
-          usedCloudReasoning = true;
-
-          logger.info(
-            "Streaming reasoning complete",
-            {
-              reasoningDurationMs: Math.round(performance.now() - reasoningStart),
-              model: reasonResult.model,
-            },
-            "streaming"
-          );
-        } else {
-          const effectiveModel = getEffectiveReasoningModel();
-          if (effectiveModel) {
-            const result = await this.processWithReasoningModel(
-              finalText,
-              effectiveModel,
-              agentName
-            );
-            if (result) {
-              finalText = result;
-            }
-            logger.info(
-              "Streaming BYOK reasoning complete",
-              { reasoningDurationMs: Math.round(performance.now() - reasoningStart) },
-              "streaming"
-            );
-          }
-        }
-      } catch (reasonError) {
-        logger.error(
-          "Streaming reasoning failed, using raw text",
-          { error: reasonError.message },
-          "streaming"
-        );
+      if (this.accumulatedReasonedText) {
+         finalText = this.accumulatedReasonedText;
+         usedCloudReasoning = true;
+         logger.info(
+           "Streaming reasoning (batch) complete",
+           {
+             waitDurationMs: Math.round(performance.now() - waitStart),
+             textLength: finalText.length
+           },
+           "streaming"
+         );
       }
     }
 

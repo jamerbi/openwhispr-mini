@@ -28,6 +28,9 @@ export const useAudioRecording = (toast, options = {}) => {
       const currentState = audioManagerRef.current.getState();
       if (currentState.isRecording || currentState.isProcessing) return false;
 
+      // Play start cue instantly for zero-latency feedback
+      void playStartCue();
+
       // Retry STT config fetch if it wasn't loaded on mount (e.g. auth wasn't ready)
       if (!audioManagerRef.current.sttConfig) {
         const config = await window.electronAPI.getSttConfig?.();
@@ -45,7 +48,6 @@ export const useAudioRecording = (toast, options = {}) => {
           window.electronAPI?.pauseMediaPlayback?.();
         }
         window.electronAPI?.registerCancelHotkey?.("Escape");
-        void playStartCue();
       }
 
       return didStart;
