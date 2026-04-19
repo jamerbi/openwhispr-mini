@@ -203,6 +203,8 @@ interface TranscriptionSectionProps {
   setRemoteTranscriptionUrl: (url: string) => void;
   showTranscriptionPreview: boolean;
   setShowTranscriptionPreview: (value: boolean) => void;
+  dictationStreamingPreference: string;
+  setDictationStreamingPreference: (value: string) => void;
   toast: (opts: {
     title: string;
     description: string;
@@ -245,6 +247,8 @@ function TranscriptionSection({
   setRemoteTranscriptionUrl,
   showTranscriptionPreview,
   setShowTranscriptionPreview,
+  dictationStreamingPreference,
+  setDictationStreamingPreference,
   toast,
 }: TranscriptionSectionProps) {
   const { t } = useTranslation();
@@ -354,6 +358,26 @@ function TranscriptionSection({
     />
   );
 
+  const renderDictationModeToggle = () => (
+    <SettingsPanel>
+      <SettingsPanelRow>
+        <SettingsRow
+          label={t("settingsPage.transcription.dictationMode")}
+          description={t("settingsPage.transcription.dictationModeDescription")}
+        >
+          <select
+            value={dictationStreamingPreference}
+            onChange={(e) => setDictationStreamingPreference(e.target.value)}
+            className="h-7 rounded border border-border/70 bg-surface-1/80 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm hover:border-border-hover hover:bg-surface-2/70 focus:outline-none focus:ring-2 focus:ring-ring/30 focus:ring-offset-1 transition-colors duration-200"
+          >
+            <option value="streaming">{t("settingsPage.transcription.dictationModeStreaming")}</option>
+            <option value="batch">{t("settingsPage.transcription.dictationModeBatch")}</option>
+          </select>
+        </SettingsRow>
+      </SettingsPanelRow>
+    </SettingsPanel>
+  );
+
   return (
     <div className="space-y-4">
       <SectionHeader
@@ -382,6 +406,8 @@ function TranscriptionSection({
           onUrlChange={setRemoteTranscriptionUrl}
         />
       )}
+
+      {renderDictationModeToggle()}
 
       <GpuDeviceSelector purpose="transcription" />
     </div>

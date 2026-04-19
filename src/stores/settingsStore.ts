@@ -232,6 +232,7 @@ export interface SettingsState
   setDictationKey: (key: string) => void;
   setMeetingKey: (key: string) => void;
   setActivationMode: (mode: "tap" | "push") => void;
+  setDictationStreamingPreference: (mode: string) => void;
 
   setPreferBuiltInMic: (value: boolean) => void;
   setSelectedMicDeviceId: (value: string) => void;
@@ -366,6 +367,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   customReasoningApiKey: readString("customReasoningApiKey", ""),
 
   dictationKey: readString("dictationKey", ""),
+  dictationStreamingPreference: readString("dictationStreamingPreference", "streaming"),
   meetingKey: readString("meetingKey", ""),
   activationMode: (readString("activationMode", "tap") === "push" ? "push" : "tap") as
     | "tap"

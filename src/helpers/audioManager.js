@@ -2025,6 +2025,12 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     if (this.context === "notes") {
       return localStorage.getItem("notesStreamingPreference") === "streaming";
     }
+    
+    // Check local dictionary preference for dictation first
+    const dictationPref = localStorage.getItem("dictationStreamingPreference");
+    if (dictationPref === "batch") return false;
+    if (dictationPref === "streaming") return true;
+
     if (!this.sttConfig) return false;
     return this.sttConfig.dictation?.mode === "streaming";
   }

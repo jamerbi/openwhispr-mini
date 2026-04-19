@@ -1576,7 +1576,11 @@
         "deleteModels": "Delete Models"
       },
       "transcriptionPreview": "Live Transcription Preview",
-      "transcriptionPreviewDescription": "Show transcription in a floating window before cleanup"
+      "transcriptionPreviewDescription": "Show transcription in a floating window before cleanup",
+      "dictationMode": "Dictation Mode (Hotkey)",
+      "dictationModeDescription": "Choose how hotkey dictation is processed",
+      "dictationModeStreaming": "Real-time Streaming (Live Preview)",
+      "dictationModeBatch": "Batch processing on release (High Accuracy)"
     },
     "intelligence": {
       "gpuDevice": {

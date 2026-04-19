@@ -1528,7 +1528,11 @@
         "deleteModels": "Eliminar modelos"
       },
       "transcriptionPreview": "Vista previa en vivo",
-      "transcriptionPreviewDescription": "Mostrar transcripción en una ventana flotante antes de la corrección"
+      "transcriptionPreviewDescription": "Mostrar transcripción en una ventana flotante antes de la corrección",
+      "dictationMode": "Modo de Dictado (Atajo)",
+      "dictationModeDescription": "Elige cómo se procesa el dictado rápido",
+      "dictationModeStreaming": "En tiempo real (Streaming)",
+      "dictationModeBatch": "Lote al soltar (Alta precisión)"
     },
     "intelligence": {
       "gpuDevice": {

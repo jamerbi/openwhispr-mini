@@ -3,7 +3,6 @@ import { useSettingsStore, initializeSettings } from "../stores/settingsStore";
 import logger from "../utils/logger";
 import { useLocalStorage } from "./useLocalStorage";
 import type { LocalTranscriptionProvider, InferenceMode, SelfHostedType } from "../types/electron";
-
 export interface TranscriptionSettings {
   uiLanguage: string;
   useLocalWhisper: boolean;
@@ -16,11 +15,13 @@ export interface TranscriptionSettings {
   preferredLanguage: string;
   cloudTranscriptionProvider: string;
   cloudTranscriptionModel: string;
-  cloudTranscriptionBaseUrl?: string;
   cloudTranscriptionMode: string;
+  cloudTranscriptionBaseUrl: string;
   transcriptionMode: InferenceMode;
   remoteTranscriptionType: SelfHostedType;
   remoteTranscriptionUrl: string;
+  dictationStreamingPreference: string;
+}
   customDictionary: string[];
   assemblyAiStreaming: boolean;
   showTranscriptionPreview: boolean;
@@ -205,6 +206,7 @@ function useSettingsInternal() {
     groqApiKey: store.groqApiKey,
     mistralApiKey: store.mistralApiKey,
     dictationKey: store.dictationKey,
+    dictationStreamingPreference: store.dictationStreamingPreference,
     meetingKey: store.meetingKey,
     theme: store.theme,
     setUseLocalWhisper: store.setUseLocalWhisper,
@@ -242,6 +244,7 @@ function useSettingsInternal() {
     customReasoningApiKey: store.customReasoningApiKey,
     setCustomReasoningApiKey: store.setCustomReasoningApiKey,
     setDictationKey: store.setDictationKey,
+    setDictationStreamingPreference: store.setDictationStreamingPreference,
     setMeetingKey: store.setMeetingKey,
     setTheme: store.setTheme,
     activationMode: store.activationMode,
