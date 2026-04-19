@@ -595,8 +595,14 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
       window.electronAPI?.notifyHotkeyChanged?.(key);
       window.electronAPI?.saveDictationKey?.(key);
     }
-  },
-  setMeetingKey: (key: string) => {
+    },
+
+    setDictationStreamingPreference: (mode: string) => {
+    if (isBrowser) localStorage.setItem("dictationStreamingPreference", mode);
+    set({ dictationStreamingPreference: mode });
+    },
+
+    setMeetingKey: (key: string) => {
     if (isBrowser) localStorage.setItem("meetingKey", key);
     set({ meetingKey: key });
   },

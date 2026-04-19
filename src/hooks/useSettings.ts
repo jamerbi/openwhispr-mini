@@ -15,13 +15,12 @@ export interface TranscriptionSettings {
   preferredLanguage: string;
   cloudTranscriptionProvider: string;
   cloudTranscriptionModel: string;
+  cloudTranscriptionBaseUrl?: string;
   cloudTranscriptionMode: string;
-  cloudTranscriptionBaseUrl: string;
   transcriptionMode: InferenceMode;
   remoteTranscriptionType: SelfHostedType;
   remoteTranscriptionUrl: string;
   dictationStreamingPreference: string;
-}
   customDictionary: string[];
   assemblyAiStreaming: boolean;
   showTranscriptionPreview: boolean;

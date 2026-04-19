@@ -2007,6 +2007,17 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     const s = getSettings();
     if (s.useLocalWhisper) return false;
 
+    // Check local user preference for dictation first (highest precedence)
+    if (this.context === "dictation" || this.context === "agent") {
+      const dictationPref = localStorage.getItem("dictationStreamingPreference");
+      if (dictationPref === "batch") return false;
+      if (dictationPref === "streaming") return true;
+    }
+
+    if (this.context === "notes") {
+      return localStorage.getItem("notesStreamingPreference") === "streaming";
+    }
+
     // For dictation/agent: respect sttConfig mode from the API — this allows
     // batch mode even for realtime-capable models (e.g. gpt-4o-mini-transcribe).
     if (this.context !== "notes" && this.sttConfig?.dictation?.mode === "batch") {
@@ -2022,14 +2033,6 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     if (s.cloudTranscriptionMode !== "openwhispr" || !(isSignedInOverride ?? s.isSignedIn)) {
       return false;
     }
-    if (this.context === "notes") {
-      return localStorage.getItem("notesStreamingPreference") === "streaming";
-    }
-    
-    // Check local dictionary preference for dictation first
-    const dictationPref = localStorage.getItem("dictationStreamingPreference");
-    if (dictationPref === "batch") return false;
-    if (dictationPref === "streaming") return true;
 
     if (!this.sttConfig) return false;
     return this.sttConfig.dictation?.mode === "streaming";

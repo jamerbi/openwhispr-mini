@@ -690,6 +690,8 @@ export default function SettingsPage({
     groqApiKey,
     mistralApiKey,
     dictationKey,
+    dictationStreamingPreference,
+    setDictationStreamingPreference,
     activationMode,
     setActivationMode,
     preferBuiltInMic,
@@ -2275,6 +2277,8 @@ EOF`,
             setRemoteTranscriptionUrl={setRemoteTranscriptionUrl}
             showTranscriptionPreview={showTranscriptionPreview}
             setShowTranscriptionPreview={setShowTranscriptionPreview}
+            dictationStreamingPreference={dictationStreamingPreference}
+            setDictationStreamingPreference={setDictationStreamingPreference}
             toast={toast}
           />
         );
