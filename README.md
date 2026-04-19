@@ -1,8 +1,10 @@
 <p align="center">
   <img src="src/assets/logo.svg" alt="OpenWhispr" width="120" />
-</p>
+<h1 align="center">OpenWhispr Mini</h1>
 
-<h1 align="center">OpenWhispr (Local Unplugged Edition)</h1>
+<p align="center">
+  <b>⚡ Mini Edition Highlights:</b> This specialized version is optimized for maximum performance and user control. It introduces zero-latency feedback, real-time asynchronous AI reasoning, and a high-accuracy batch mode for professional dictation workflows.
+</p>
 
 <p align="center">
   <b>⚠️ Custom Fork Notice:</b> This version focuses on a stripped-down, unbundled experience. <b>All SaaS "Pro" tiers, OpenWhispr Cloud integrations, and Telemetry/Analytics trackers have been completely removed.</b> However, this fork embraces a powerful BYOK (Bring Your Own Key) philosophy: you are completely free to process audio locally or link up your own API keys for third-party providers such as OpenAI, Anthropic, Gemini, Groq, and custom API endpoints.
@@ -15,6 +17,15 @@
   <a href="https://github.com/OpenWhispr/openwhispr/releases"><img src="https://img.shields.io/github/downloads/OpenWhispr/openwhispr/total?style=flat&color=blue" alt="Downloads" /></a>
   <a href="https://github.com/OpenWhispr/openwhispr/stargazers"><img src="https://img.shields.io/github/stars/OpenWhispr/openwhispr?style=flat" alt="GitHub stars" /></a>
 </p>
+
+## Mini Edition Features
+
+- **Zero-Latency Audio Cues** — Start sounds trigger instantly on hotkey press (0ms lag), enmasking system audio initialization.
+- **Real-Time Batch Reasoning** — AI correction happens asynchronously in small sentence batches while you speak, ensuring the final text is ready the moment you finish.
+- **High-Accuracy Batch Mode** — New toggleable mode that records the full audio and performs a single high-context transcription upon release, maximizing grammatical precision.
+- **Optimized Performance** — Significantly reduced UI overhead and faster cold-start times for the transcription engine.
+
+## Features
 
 <p align="center">
   Free, open-source voice-to-text dictation app with AI agents, meeting transcription, and notes.<br/>
