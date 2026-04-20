@@ -90,6 +90,7 @@ export const useAudioRecording = (toast, options = {}) => {
     audioManagerRef.current.setCallbacks({
       onStateChange: ({ isRecording, isProcessing, isStreaming }) => {
         if (!isRecording) window.electronAPI?.unregisterCancelHotkey?.();
+        console.log("[useAudioRecording] onStateChange:", { isRecording, isProcessing, isStreaming });
         setIsRecording(isRecording);
         setIsProcessing(isProcessing);
         setIsStreaming(isStreaming ?? false);
@@ -113,6 +114,7 @@ export const useAudioRecording = (toast, options = {}) => {
         }
       },
       onPartialTranscript: (text) => {
+        console.log("[useAudioRecording] onPartialTranscript:", { textLength: text?.length || 0, text: text?.substring(0, 50) });
         setPartialTranscript(text);
       },
       onTranscriptionComplete: async (result) => {

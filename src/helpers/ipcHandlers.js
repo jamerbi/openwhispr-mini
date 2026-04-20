@@ -1289,6 +1289,23 @@ class IPCHandlers {
           event.sender.send("no-audio-detected");
         }
 
+        // Log usage event for local transcription (non-blocking)
+        if (result.success && result.text) {
+          setImmediate(() => {
+            try {
+              const words = (result.text || "").trim().split(/\s+/).filter(Boolean).length;
+              this.databaseManager.logUsageEvent({
+                eventType: "transcription",
+                provider: "whisper",
+                model: options?.model || null,
+                wordCount: words,
+                charCount: (result.text || "").length,
+                audioDurationMs: options?.audioDurationMs || null,
+              });
+            } catch (_) {}
+          });
+        }
+
         return result;
       } catch (error) {
         debugLogger.error("Local Whisper transcription error", error);
@@ -2385,6 +2402,20 @@ class IPCHandlers {
       try {
         const LocalReasoningService = require("../services/localReasoningBridge").default;
         const result = await LocalReasoningService.processText(text, modelId, config);
+        setImmediate(() => {
+          try {
+            this.databaseManager.logUsageEvent({
+              eventType: "ai",
+              provider: "local",
+              model: modelId,
+              wordCount: text.trim().split(/\s+/).filter(Boolean).length,
+              charCount: text.length,
+              inputTokens: 0,
+              outputTokens: 0,
+              estimatedCostUsd: 0,
+            });
+          } catch (_) {}
+        });
         return { success: true, text: result };
       } catch (error) {
         return { success: false, error: error.message };
@@ -2442,6 +2473,20 @@ class IPCHandlers {
           }
 
           const data = await response.json();
+          setImmediate(() => {
+            try {
+              this.databaseManager.logUsageEvent({
+                eventType: "ai",
+                provider: "anthropic",
+                model: modelId,
+                wordCount: text.trim().split(/\s+/).filter(Boolean).length,
+                charCount: text.length,
+                inputTokens: data.usage?.input_tokens || 0,
+                outputTokens: data.usage?.output_tokens || 0,
+                estimatedCostUsd: 0,
+              });
+            } catch (_) {}
+          });
           return { success: true, text: data.content[0].text.trim() };
         } catch (error) {
           debugLogger.error("Anthropic reasoning error:", error);
@@ -4722,6 +4767,16 @@ class IPCHandlers {
       return { success: true, text: result.text || "" };
     });
 
+    ipcMain.handle("show-transcription-preview", async (_event, text) => {
+      this.windowManager.showTranscriptionPreview(text || "");
+      return { success: true };
+    });
+
+    ipcMain.handle("append-transcription-preview", async (_event, text) => {
+      this.windowManager.appendTranscriptionPreview(text || "");
+      return { success: true };
+    });
+
     ipcMain.handle("start-dictation-preview", async (_event, { provider, model }) => {
       resetDictationPreviewState();
       dictationPreviewMode = true;
@@ -5265,10 +5320,18 @@ class IPCHandlers {
     ipcMain.handle("get-stt-config", async (event) => {
       try {
         const apiUrl = getApiUrl();
-        if (!apiUrl) throw new Error("OpenWhispr API URL not configured");
+        if (!apiUrl) {
+          // API URL not configured - likely running without OpenWhispr Cloud
+          debugLogger.debug("STT config skipped: API URL not configured", {}, "cloud");
+          return null;
+        }
 
         const cookieHeader = await getSessionCookies(event);
-        if (!cookieHeader) throw new Error("No session cookies available");
+        if (!cookieHeader) {
+          // No session cookies - user not signed into OpenWhispr Cloud
+          debugLogger.debug("STT config skipped: no session (user not signed in)", {}, "cloud");
+          return null;
+        }
 
         const response = await fetch(`${apiUrl}/api/stt-config`, {
           headers: { Cookie: cookieHeader },
@@ -5281,13 +5344,15 @@ class IPCHandlers {
           if (response.status === 503) {
             return { success: false, error: "Request timed out", code: "SERVER_ERROR" };
           }
+          debugLogger.debug(`STT config API error: ${response.status}`, {}, "cloud");
           throw new Error(`API error: ${response.status}`);
         }
 
         const data = await response.json();
         return { success: true, ...data };
       } catch (error) {
-        debugLogger.error("STT config fetch error:", error);
+        // Don't log as error - this is expected when not signed into OpenWhispr Cloud
+        debugLogger.debug("STT config fetch skipped", { reason: error.message }, "cloud");
         return null;
       }
     });

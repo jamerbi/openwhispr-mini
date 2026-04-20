@@ -618,10 +618,6 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
 
       this.onTranscriptionComplete?.(result);
 
-      if (result?.source === "openwhispr") {
-        window.dispatchEvent(new Event("usage-changed"));
-      }
-
       const roundTripDurationMs = Math.round(performance.now() - pipelineStart);
 
       const timingData = {
@@ -2005,37 +2001,65 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
 
   shouldUseStreaming(isSignedInOverride) {
     const s = getSettings();
-    if (s.useLocalWhisper) return false;
+    if (s.useLocalWhisper) {
+      logger.debug("shouldUseStreaming: false (local whisper enabled)", {}, "streaming");
+      return false;
+    }
 
     // Check local user preference for dictation first (highest precedence)
     if (this.context === "dictation" || this.context === "agent") {
-      const dictationPref = localStorage.getItem("dictationStreamingPreference");
-      if (dictationPref === "batch") return false;
-      if (dictationPref === "streaming") return true;
+      const dictationPref = s.dictationStreamingPreference;
+      if (dictationPref === "batch") {
+        logger.debug("shouldUseStreaming: false (dictation batch preference)", {}, "streaming");
+        return false;
+      }
+      if (dictationPref === "streaming") {
+        logger.debug("shouldUseStreaming: true (dictation streaming preference)", {}, "streaming");
+        return true;
+      }
     }
 
     if (this.context === "notes") {
-      return localStorage.getItem("notesStreamingPreference") === "streaming";
+      const notesPref = localStorage.getItem("notesStreamingPreference");
+      const useStreaming = notesPref === "streaming";
+      logger.debug(`shouldUseStreaming: ${useStreaming} (notes preference)`, { notesPref }, "streaming");
+      return useStreaming;
     }
 
     // For dictation/agent: respect sttConfig mode from the API — this allows
     // batch mode even for realtime-capable models (e.g. gpt-4o-mini-transcribe).
     if (this.context !== "notes" && this.sttConfig?.dictation?.mode === "batch") {
+      logger.debug("shouldUseStreaming: false (sttConfig forced batch)", {}, "streaming");
       return false;
     }
 
     if (REALTIME_MODELS.has(s.cloudTranscriptionModel)) {
-      if (s.cloudTranscriptionMode === "byok") return !!s.openaiApiKey;
-      if (s.cloudTranscriptionMode === "openwhispr") return !!(isSignedInOverride ?? s.isSignedIn);
-      return false;
+      let result = false;
+      if (s.cloudTranscriptionMode === "byok") {
+        result = !!s.openaiApiKey;
+      } else if (s.cloudTranscriptionMode === "openwhispr") {
+        result = !!(isSignedInOverride ?? s.isSignedIn);
+      }
+      logger.debug(`shouldUseStreaming: ${result} (realtime model logic)`, { 
+        model: s.cloudTranscriptionModel, 
+        mode: s.cloudTranscriptionMode,
+        isSignedIn: (isSignedInOverride ?? s.isSignedIn)
+      }, "streaming");
+      return result;
     }
 
     if (s.cloudTranscriptionMode !== "openwhispr" || !(isSignedInOverride ?? s.isSignedIn)) {
+      logger.debug("shouldUseStreaming: false (not signed in or not openwhispr mode)", {}, "streaming");
       return false;
     }
 
-    if (!this.sttConfig) return false;
-    return this.sttConfig.dictation?.mode === "streaming";
+    if (!this.sttConfig) {
+      logger.debug("shouldUseStreaming: false (no sttConfig and not a realtime-default model)", {}, "streaming");
+      return false;
+    }
+    const isStreaming = this.sttConfig.dictation?.mode === "streaming";
+    logger.debug(`shouldUseStreaming: ${isStreaming} (sttConfig final check)`, { mode: this.sttConfig.dictation?.mode }, "streaming");
+    return isStreaming;
   }
 
   async warmupStreamingConnection({ isSignedIn: isSignedInOverride } = {}) {
@@ -2596,10 +2620,7 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
           } catch (err) {
             logger.error("Failed to report streaming usage", { error: err.message }, "streaming");
           }
-          window.dispatchEvent(new Event("usage-changed"));
         })();
-      } else {
-        window.dispatchEvent(new Event("usage-changed"));
       }
 
       logger.info(
@@ -2617,6 +2638,8 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
 
     this.isProcessing = false;
     this.onStateChange?.({ isRecording: false, isProcessing: false, isStreaming: false });
+
+    this.cleanupPreview({ showCleanup: this.shouldShowPreviewCleanupState() });
 
     if (this.shouldUseStreaming()) {
       this.warmupStreamingConnection().catch((e) => {

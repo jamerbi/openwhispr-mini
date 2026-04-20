@@ -192,7 +192,7 @@ export default function App() {
     setWindowInteractivity(false);
   }, [setWindowInteractivity]);
 
-  const { isRecording, isProcessing, toggleListening, cancelRecording, cancelProcessing } =
+  const { isRecording, isProcessing, isStreaming, partialTranscript, toggleListening, cancelRecording, cancelProcessing } =
     useAudioRecording(toast, {
       onToggle: handleDictationToggle,
     });
@@ -240,11 +240,21 @@ export default function App() {
     window.electronAPI.hideWindow();
   };
 
-  useEffect(() => {
-    if (!isCommandMenuOpen) {
-      return;
-    }
+  // Streaming live text panel - shown when recording in streaming mode
+  const streamingText = partialTranscript;
+  const showStreamingPanel = isRecording && isStreaming && streamingText;
 
+  // Debug: log streaming panel state changes and update the floating transcription preview
+  useEffect(() => {
+    if (isRecording && isStreaming) {
+      window.electronAPI?.showTranscriptionPreview?.(streamingText || "");
+    } else if (!isRecording && !isProcessing) {
+      // Ensure it's hidden if we are not doing anything
+      // though useAudioRecording usually handles this via onTranscriptionComplete
+    }
+  }, [isRecording, isStreaming, streamingText]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         commandMenuRef.current &&
@@ -360,6 +370,7 @@ export default function App() {
               />
             </button>
           )}
+
           <Tooltip
             content={micProps.tooltip}
             align={

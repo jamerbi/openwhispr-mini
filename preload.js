@@ -442,6 +442,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   cloudApiRequest: (opts) => ipcRenderer.invoke("cloud-api-request", opts),
   getSttConfig: () => ipcRenderer.invoke("get-stt-config"),
 
+  // Usage stats (local token/word tracking)
+  usageGetStats: (opts) => ipcRenderer.invoke("usage:get-stats", opts),
+  usageResetStats: () => ipcRenderer.invoke("usage:reset-stats"),
+  usageLogEvent: (eventData) => ipcRenderer.invoke("usage:log-event", eventData),
+
   // Cloud audio file transcription
   transcribeAudioFileCloud: (filePath) =>
     ipcRenderer.invoke("transcribe-audio-file-cloud", filePath),
@@ -665,6 +670,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     (callback) => (_event, payload) => callback(payload)
   ),
   onPreviewHide: registerListener("preview-hide", (callback) => () => callback()),
+  showTranscriptionPreview: (text) => ipcRenderer.invoke("show-transcription-preview", text),
+  appendTranscriptionPreview: (text) => ipcRenderer.invoke("append-transcription-preview", text),
   startDictationPreview: (opts) => ipcRenderer.invoke("start-dictation-preview", opts),
   stopDictationPreview: (opts) => ipcRenderer.invoke("stop-dictation-preview", opts),
   dismissDictationPreview: () => ipcRenderer.invoke("dismiss-dictation-preview"),
